@@ -852,9 +852,7 @@ Respond in JSON format with fields: product_name, price, color, quality_score, v
         """Execute x402 payment with A0GI tokens - Charlie pays Alice (with AP2 intent authorization)"""
 
         # Calculate payment based on analysis quality (using small amounts for demo)
-        base_payment = (
-            0.00005  # Base 0.00005 A0GI (small amount for demo with limited funds)
-        )
+        base_payment = 0.001  # 0.001 A0GI - reasonable for testnet
         confidence_score = analysis_data.get("analysis", {}).get("confidence", 0.85)
         quality_multiplier = confidence_score  # Direct confidence scaling
         final_amount = base_payment * quality_multiplier
@@ -896,7 +894,7 @@ Respond in JSON format with fields: product_name, price, color, quality_score, v
         rprint(f"[green]💳 Payment Successful (Direct A0GI Transfer)[/green]")
         rprint(f"   From: Charlie")
         rprint(f"   To: Alice")
-        rprint(f"   Amount: {x402_payment_result.amount:.4f} A0GI")
+        rprint(f"   Amount: {x402_payment_result.amount:.8f} A0GI")
         rprint(f"   Transaction: {x402_payment_result.transaction_hash}")
         tx_hash = (
             x402_payment_result.transaction_hash
@@ -1108,7 +1106,7 @@ Provide validation in JSON format with fields: completeness_score, accuracy_scor
 
             validation_payment_result = self.charlie_sdk.execute_payment(
                 to_agent="Bob",
-                amount=0.00005,  # 0.00005 A0GI for validation (small amount for demo)
+                amount=0.0005,  # 0.0005 A0GI for validation
                 service_type="validation",
             )
 
@@ -1196,7 +1194,7 @@ Provide validation in JSON format with fields: completeness_score, accuracy_scor
 
         validation_payment_result = self.charlie_sdk.execute_payment(
             to_agent="Bob",
-            amount=0.00005,  # 0.00005 A0GI for validation (small amount for demo)
+            amount=0.0005,  # 0.0005 A0GI for validation
             service_type="validation",
         )
 
