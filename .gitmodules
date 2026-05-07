@@ -1,0 +1,3 @@
+[submodule "external/tradememory-protocol"]
+	path = external/tradememory-protocol
+	url = https://github.com/mnemox-ai/tradememory-protocol.git
