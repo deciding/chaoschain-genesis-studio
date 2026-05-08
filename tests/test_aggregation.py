@@ -136,3 +136,34 @@ def test_group_by_strategy():
     assert breakout["total_pnl"] == 50
     assert breakout["win_rate"] == 50.0
     assert breakout["trade_ids"] == ["trade_001", "trade_002"]
+
+
+def test_aggregate_creates_semantic():
+    """Test aggregate creates semantic patterns in DKG."""
+    from unittest.mock import Mock
+
+    engine = AggregationEngine(dkg=Mock())
+
+    engine._store_trade(
+        {
+            "id": "t1",
+            "strategy": "breakout",
+            "pnl": 100,
+            "symbol": "XAUUSD",
+            "direction": "long",
+        }
+    )
+    engine._store_trade(
+        {
+            "id": "t2",
+            "strategy": "breakout",
+            "pnl": -50,
+            "symbol": "XAUUSD",
+            "direction": "long",
+        }
+    )
+
+    patterns = engine.aggregate()
+
+    assert len(patterns) >= 1
+    engine.dkg.add_memory.assert_called()

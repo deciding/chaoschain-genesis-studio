@@ -34,9 +34,63 @@ class AggregationEngine:
         return {"trade_id": trade["id"], "count": self.trade_count_since_aggregation}
 
     def aggregate(self) -> List[dict]:
-        """Run SQL grouping - placeholder."""
+        """Run SQL grouping → create semantic patterns in DKG."""
+        patterns = []
+
+        if self.dkg is None:
+            self.trade_count_since_aggregation = 0
+            return patterns
+
+        for sp in self._group_by_strategy():
+            if sp["count"] >= 2:
+                semantic = self.dkg.add_memory(
+                    f"semantic_strategy_{sp['strategy']}",
+                    "semantic",
+                    {
+                        "pattern_type": "strategy",
+                        "strategy": sp["strategy"],
+                        "total_pnl": sp["total_pnl"],
+                        "win_rate": sp["win_rate"],
+                        "count": sp["count"],
+                    },
+                    caused_by=sp["trade_ids"],
+                )
+                patterns.append(semantic)
+
+        for sp in self._group_by_symbol():
+            if sp["count"] >= 2:
+                semantic = self.dkg.add_memory(
+                    f"semantic_symbol_{sp['symbol']}",
+                    "semantic",
+                    {
+                        "pattern_type": "symbol",
+                        "symbol": sp["symbol"],
+                        "total_pnl": sp["total_pnl"],
+                        "win_rate": sp["win_rate"],
+                        "count": sp["count"],
+                    },
+                    caused_by=sp["trade_ids"],
+                )
+                patterns.append(semantic)
+
+        for sp in self._group_by_direction():
+            if sp["count"] >= 2:
+                semantic = self.dkg.add_memory(
+                    f"semantic_direction_{sp['direction']}",
+                    "semantic",
+                    {
+                        "pattern_type": "direction",
+                        "direction": sp["direction"],
+                        "total_pnl": sp["total_pnl"],
+                        "win_rate": sp["win_rate"],
+                        "count": sp["count"],
+                    },
+                    caused_by=sp["trade_ids"],
+                )
+                patterns.append(semantic)
+
         self.trade_count_since_aggregation = 0
-        return []
+        return patterns
 
     def _store_trade(self, trade: dict):
         """Store trade in local SQLite."""
