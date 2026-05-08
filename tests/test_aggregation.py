@@ -2,6 +2,15 @@ import pytest
 from tradememory.aggregation import AggregationEngine
 
 
+@pytest.fixture(autouse=True)
+def clean_db():
+    """Clean database before each test."""
+    engine = AggregationEngine()
+    engine.db.execute("DELETE FROM trade_index")
+    engine.db.commit()
+    yield
+
+
 def test_aggregation_engine_init():
     """Test AggregationEngine initializes correctly."""
     engine = AggregationEngine()
@@ -76,3 +85,24 @@ def test_store_trade_in_sqlite():
     row = cursor.fetchone()
     assert row is not None
     assert row[1] == "episodic"
+
+
+def test_group_by_strategy():
+    """Test SQL grouping by strategy."""
+    engine = AggregationEngine()
+
+    trades = [
+        {"id": "trade_001", "strategy": "breakout", "pnl": 100},
+        {"id": "trade_002", "strategy": "breakout", "pnl": -50},
+        {"id": "trade_003", "strategy": "mean_reversion", "pnl": 200},
+    ]
+    for t in trades:
+        engine._store_trade(t)
+
+    results = engine._group_by_strategy()
+
+    assert len(results) == 2
+    breakout = next(r for r in results if r["strategy"] == "breakout")
+    assert breakout["total_pnl"] == 50
+    assert breakout["win_rate"] == 50.0
+    assert breakout["trade_ids"] == ["trade_001", "trade_002"]

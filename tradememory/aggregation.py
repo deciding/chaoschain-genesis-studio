@@ -57,3 +57,45 @@ class AggregationEngine:
             ),
         )
         self.db.commit()
+
+    def _group_by_strategy(self) -> List[dict]:
+        """SQL: Group by strategy."""
+        import json
+
+        cursor = self.db.execute(
+            "SELECT id, content FROM trade_index WHERE memory_type = 'episodic'"
+        )
+
+        groups: dict = {}
+        for row in cursor.fetchall():
+            content = json.loads(row[1])
+            strat = content.get("strategy", "unknown")
+            if strat not in groups:
+                groups[strat] = {
+                    "strategy": strat,
+                    "trades": [],
+                    "wins": 0,
+                    "total_pnl": 0,
+                }
+            groups[strat]["trades"].append(content["id"])
+            pnl = content.get("pnl", 0)
+            groups[strat]["total_pnl"] += pnl
+            if pnl > 0:
+                groups[strat]["wins"] += 1
+
+        results = []
+        for strat, data in groups.items():
+            count = len(data["trades"])
+            results.append(
+                {
+                    "strategy": strat,
+                    "total_pnl": data["total_pnl"],
+                    "win_rate": round(data["wins"] / count * 100, 1)
+                    if count > 0
+                    else 0,
+                    "count": count,
+                    "trade_ids": data["trades"],
+                }
+            )
+
+        return results
