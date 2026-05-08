@@ -87,6 +87,36 @@ def test_store_trade_in_sqlite():
     assert row[1] == "episodic"
 
 
+def test_group_by_symbol():
+    """Test SQL grouping by symbol."""
+    engine = AggregationEngine()
+
+    engine._store_trade({"id": "t1", "symbol": "XAUUSD", "pnl": 100})
+    engine._store_trade({"id": "t2", "symbol": "XAUUSD", "pnl": -50})
+    engine._store_trade({"id": "t3", "symbol": "BTCUSD", "pnl": 200})
+
+    results = engine._group_by_symbol()
+
+    xauusd = next(r for r in results if r["symbol"] == "XAUUSD")
+    assert xauusd["total_pnl"] == 50
+    assert xauusd["win_rate"] == 50.0
+
+
+def test_group_by_direction():
+    """Test SQL grouping by direction."""
+    engine = AggregationEngine()
+
+    engine._store_trade({"id": "t1", "direction": "long", "pnl": 100})
+    engine._store_trade({"id": "t2", "direction": "long", "pnl": -50})
+    engine._store_trade({"id": "t3", "direction": "short", "pnl": 200})
+
+    results = engine._group_by_direction()
+
+    long_group = next(r for r in results if r["direction"] == "long")
+    assert long_group["total_pnl"] == 50
+    assert long_group["win_rate"] == 50.0
+
+
 def test_group_by_strategy():
     """Test SQL grouping by strategy."""
     engine = AggregationEngine()

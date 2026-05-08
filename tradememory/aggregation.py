@@ -99,3 +99,87 @@ class AggregationEngine:
             )
 
         return results
+
+    def _group_by_symbol(self) -> List[dict]:
+        """SQL: Group by symbol."""
+        import json
+
+        cursor = self.db.execute(
+            "SELECT id, content FROM trade_index WHERE memory_type = 'episodic'"
+        )
+
+        groups: dict = {}
+        for row in cursor.fetchall():
+            content = json.loads(row[1])
+            sym = content.get("symbol", "unknown")
+            if sym not in groups:
+                groups[sym] = {
+                    "symbol": sym,
+                    "trades": [],
+                    "wins": 0,
+                    "total_pnl": 0,
+                }
+            groups[sym]["trades"].append(content["id"])
+            pnl = content.get("pnl", 0)
+            groups[sym]["total_pnl"] += pnl
+            if pnl > 0:
+                groups[sym]["wins"] += 1
+
+        results = []
+        for sym, data in groups.items():
+            count = len(data["trades"])
+            results.append(
+                {
+                    "symbol": sym,
+                    "total_pnl": data["total_pnl"],
+                    "win_rate": round(data["wins"] / count * 100, 1)
+                    if count > 0
+                    else 0,
+                    "count": count,
+                    "trade_ids": data["trades"],
+                }
+            )
+
+        return results
+
+    def _group_by_direction(self) -> List[dict]:
+        """SQL: Group by direction."""
+        import json
+
+        cursor = self.db.execute(
+            "SELECT id, content FROM trade_index WHERE memory_type = 'episodic'"
+        )
+
+        groups: dict = {}
+        for row in cursor.fetchall():
+            content = json.loads(row[1])
+            direction = content.get("direction", "unknown")
+            if direction not in groups:
+                groups[direction] = {
+                    "direction": direction,
+                    "trades": [],
+                    "wins": 0,
+                    "total_pnl": 0,
+                }
+            groups[direction]["trades"].append(content["id"])
+            pnl = content.get("pnl", 0)
+            groups[direction]["total_pnl"] += pnl
+            if pnl > 0:
+                groups[direction]["wins"] += 1
+
+        results = []
+        for direction, data in groups.items():
+            count = len(data["trades"])
+            results.append(
+                {
+                    "direction": direction,
+                    "total_pnl": data["total_pnl"],
+                    "win_rate": round(data["wins"] / count * 100, 1)
+                    if count > 0
+                    else 0,
+                    "count": count,
+                    "trade_ids": data["trades"],
+                }
+            )
+
+        return results
