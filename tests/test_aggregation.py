@@ -23,3 +23,23 @@ def test_add_trade_increments_counter():
         }
     )
     assert engine.trade_count_since_aggregation == initial + 1
+
+
+def test_store_trade_in_sqlite():
+    """Test trade is stored in local SQLite."""
+    engine = AggregationEngine()
+    trade = {
+        "id": "trade_xauusd_001",
+        "symbol": "XAUUSD",
+        "direction": "long",
+        "entry": 2045,
+        "pnl": 100,
+        "strategy": "breakout",
+    }
+    engine._store_trade(trade)
+
+    # Verify it's in SQLite
+    cursor = engine.db.execute("SELECT * FROM trade_index WHERE id = ?", (trade["id"],))
+    row = cursor.fetchone()
+    assert row is not None
+    assert row[1] == "episodic"

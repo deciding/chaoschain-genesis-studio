@@ -29,3 +29,23 @@ class AggregationEngine:
         """Add episodic trade."""
         self.trade_count_since_aggregation += 1
         return {"trade_id": trade["id"], "count": self.trade_count_since_aggregation}
+
+    def _store_trade(self, trade: dict):
+        """Store trade in local SQLite."""
+        import json
+        from datetime import datetime
+
+        self.db.execute(
+            """
+            INSERT OR REPLACE INTO trade_index (id, memory_type, content, timestamp, uploaded_0g)
+            VALUES (?, ?, ?, ?, ?)
+        """,
+            (
+                trade["id"],
+                "episodic",
+                json.dumps(trade),
+                datetime.utcnow().isoformat(),
+                0,
+            ),
+        )
+        self.db.commit()
