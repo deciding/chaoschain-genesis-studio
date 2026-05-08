@@ -25,6 +25,39 @@ def test_add_trade_increments_counter():
     assert engine.trade_count_since_aggregation == initial + 1
 
 
+def test_auto_aggregate_at_10():
+    """Test aggregation runs after 10 trades."""
+    from unittest.mock import patch
+
+    engine = AggregationEngine()
+
+    # Add 9 trades - should NOT aggregate
+    for i in range(9):
+        engine.add_trade(
+            {
+                "id": f"trade_{i:03d}",
+                "symbol": "XAUUSD",
+                "direction": "long",
+                "pnl": 100,
+                "strategy": "breakout",
+            }
+        )
+    assert engine.trade_count_since_aggregation == 9
+
+    # Add 10th trade - should aggregate
+    with patch.object(engine, "aggregate") as mock_agg:
+        engine.add_trade(
+            {
+                "id": "trade_009",
+                "symbol": "XAUUSD",
+                "direction": "long",
+                "pnl": 100,
+                "strategy": "breakout",
+            }
+        )
+        mock_agg.assert_called_once()
+
+
 def test_store_trade_in_sqlite():
     """Test trade is stored in local SQLite."""
     engine = AggregationEngine()

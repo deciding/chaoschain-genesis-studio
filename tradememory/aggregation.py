@@ -26,9 +26,17 @@ class AggregationEngine:
         self.db.commit()
 
     def add_trade(self, trade: dict) -> dict:
-        """Add episodic trade."""
+        """Add episodic trade, auto-aggregate at 10."""
+        self._store_trade(trade)
         self.trade_count_since_aggregation += 1
+        if self.trade_count_since_aggregation >= 10:
+            self.aggregate()
         return {"trade_id": trade["id"], "count": self.trade_count_since_aggregation}
+
+    def aggregate(self) -> List[dict]:
+        """Run SQL grouping - placeholder."""
+        self.trade_count_since_aggregation = 0
+        return []
 
     def _store_trade(self, trade: dict):
         """Store trade in local SQLite."""
